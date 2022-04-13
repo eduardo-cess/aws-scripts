@@ -1,0 +1,10 @@
+Resources:
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties: 
+        AssumeRolePolicyDocument: 
+  CodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+        Name: !Ref AWS::StackName
+        ServiceRole: 
