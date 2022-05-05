@@ -1,14 +1,11 @@
 Parameters:
   GithubOwner:
     Type: String
-    AllowedPattern: "[A-Za-z0-9-]+"
-    Default: quick-refs
+    Default: eduardo-cess
   GithubRepository:
     Type: String
-    AllowedPattern: "[A-Za-z0-9-]+"
   GithubBranch:
     Type: String
-    AllowedPattern: "[A-Za-z0-9-]+"
     Default: master
 Resources:
   CodeBuildServiceRole:
