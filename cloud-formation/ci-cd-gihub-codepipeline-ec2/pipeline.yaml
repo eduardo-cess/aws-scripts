@@ -1,3 +1,4 @@
+Description: CI/CD from Github, with Codebuild and Codedeploy
 Parameters:
   GithubOwner:
     Type: String
