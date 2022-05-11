@@ -7,6 +7,10 @@ Parameters:
   GithubBranch:
     Type: String
     Default: master
+  TagKey:
+    Type: String
+  TagValue:
+    Type: String
 Resources:
   CodeBuildServiceRole:
     Type: 'AWS::IAM::Role'
@@ -88,6 +92,64 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: 'aws/codebuild/standard:4.0'
+
+  CodeDeployTrustRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Sid: '1'
+            Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+  CodeDeployRolePolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodeDeployPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Resource:
+              - '*'
+            Action:
+              - s3:*
+          - Effect: Allow
+            Resource:
+              - '*'
+            Action:
+              - ec2:Describe*
+          - Effect: Allow
+            Resource:
+              - '*'
+            Action:
+              - autoscaling:CompleteLifecycleAction
+              - autoscaling:DeleteLifecycleHook
+              - autoscaling:DescribeLifecycleHooks
+              - autoscaling:DescribeAutoScalingGroups
+              - autoscaling:PutLifecycleHook
+              - autoscaling:RecordLifecycleActionHeartbeat
+      Roles:
+        - !Ref 'CodeDeployTrustRole'
+
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+
+  CodeDeployGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      Ec2TagFilters:
+        - Key: !Ref 'TagKey'
+          Value: !Ref 'TagValue'
+          Type: KEY_AND_VALUE
+      # ServiceRoleArn: !Ref 'CodeDeployTrustRole'
+      ServiceRoleArn: !GetAtt 
+        - CodeDeployTrustRole
+        - Arn
+
   CodePipelineServiceRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -138,6 +200,17 @@ Resources:
                   - 'codebuild:BatchGetBuilds'
                   - 'codebuild:StartBuild'
                 Resource: '*'
+              - Sid: CodeDeployPolicy
+                Resource: "*"
+                Effect: Allow
+                Action:
+                  - codedeploy:CreateDeployment
+                  - codedeploy:CreateDeploymentGroup
+                  - codedeploy:GetApplication
+                  - codedeploy:GetApplicationRevision
+                  - codedeploy:GetDeployment
+                  - codedeploy:GetDeploymentConfig
+                  - codedeploy:RegisterApplicationRevision
   CodePipelineArtifactStore:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -203,3 +276,17 @@ Resources:
                 - Name: BuildOutput
               InputArtifacts:
                 - Name: SourceCode
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: '1'
+                Provider: CodeDeploy
+              Configuration:
+                ApplicationName: !Ref CodeDeployApplication
+                DeploymentGroupName: !Ref CodeDeployGroup
+              InputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
