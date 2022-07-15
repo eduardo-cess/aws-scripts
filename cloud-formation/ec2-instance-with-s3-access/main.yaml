@@ -19,6 +19,9 @@ Parameters:
   KeyPairName:
     Type: String
     Description: The name of an existing Amazon EC2 key pair in this region to use to SSH into the Amazon EC2 instances.
+  UserDataScript:
+    Type: String
+    Description: EC2 Userdata script
 
 Mappings:
   EnvironmentToInstanceType:
@@ -44,6 +47,11 @@ Resources:
       KeyName: !Ref KeyPairName
       SecurityGroupIds:
         - !Ref WebAppSecurityGroup
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            ${UserDataScript}
 
   S3BucketsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
