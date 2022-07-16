@@ -17,10 +17,11 @@ function installdep(){
 if [ ${PLAT} = "ubuntu" ]; then
 
   apt-get -y update
-  # Satisfying even ubuntu older versions.
-  apt-get -y install jq awscli ruby2.0 || apt-get -y install jq awscli ruby apache2
+  curl -s https://deb.nodesource.com/setup_16.x | bash
+  apt-get -y install jq awscli ruby apache2
+  apt install nodejs -y
 
-
+  # su && apt-get -y update && curl -s https://deb.nodesource.com/setup_16.x | bash  && apt-get -y install jq awscli ruby apache2 &&  apt install nodejs -y
 
 elif [ ${PLAT} = "amz" ]; then
   yum -y update
