@@ -13,9 +13,11 @@ Parameters:
       - test
       - prod
   AmiID:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
     Description: "The ID of the AMI."
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+    Default: ami-0b0ea68c435eb488d
+  InstanceTagName: 
+    Type: String
   KeyPairName:
     Type: String
     Description: The name of an existing Amazon EC2 key pair in this region to use to SSH into the Amazon EC2 instances.
@@ -44,6 +46,9 @@ Resources:
           !Ref EnvironmentType,
           InstanceType,
         ]
+      Tags:
+        - Key: Name
+          Value: !Ref InstanceTagName
       KeyName: !Ref KeyPairName
       SecurityGroupIds:
         - !Ref WebAppSecurityGroup
@@ -52,6 +57,7 @@ Resources:
           !Sub |
             #!/bin/bash
             ${UserDataScript}
+      IamInstanceProfile: !Ref S3BucketsInstanceProfile
 
   S3BucketsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -65,9 +71,15 @@ Resources:
       PolicyName: S3BucketsPolicy
       PolicyDocument:
         Statement:
-        - Effect: Allow
+        - Sid: S3Policy
+          Effect: Allow
           Action:
           - s3:*
+          Resource: "*"
+        - Sid: SSMPolicy
+          Effect: Allow
+          Action:
+          - ssm:GetParameters
           Resource: "*"
       Roles:
       - Ref: S3BucketsRole
