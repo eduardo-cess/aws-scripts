@@ -1,5 +1,7 @@
 Description: CI/CD from Github, with Codebuild and Codedeploy
 Parameters:
+  GithubToken:
+    Type: String
   GithubOwner:
     Type: String
     Default: eduardo-cess
@@ -12,6 +14,7 @@ Parameters:
     Type: String
   TagValue:
     Type: String
+
 Resources:
   CodeBuildServiceRole:
     Type: 'AWS::IAM::Role'
@@ -62,8 +65,7 @@ Resources:
     Properties:
       AuthType: PERSONAL_ACCESS_TOKEN
       ServerType: GITHUB
-      Token: >-
-        {{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}
+      Token: !Ref 'GithubToken'
   CodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
@@ -222,8 +224,7 @@ Resources:
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken: >-
-          {{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}
+        SecretToken: !Ref 'GithubToken'
       RegisterWithThirdParty: 'true'
       Filters:
         - JsonPath: $.ref
@@ -259,8 +260,7 @@ Resources:
                 Repo: !Ref GithubRepository
                 Branch: !Ref GithubBranch
                 PollForSourceChanges: false
-                OAuthToken: >-
-                  {{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}
+                OAuthToken: !Ref 'GithubToken'
               OutputArtifacts:
                 - Name: SourceCode
         - Name: Build
